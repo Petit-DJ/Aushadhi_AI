@@ -2,7 +2,7 @@ fastapi==0.115.0
 uvicorn[standard]==0.32.0
 pydantic==2.10.0
 pydantic-settings==2.7.0
-sqlalchemy==2.0.36
+sqlalchemy==2.0.36s
 psycopg2-binary==2.9.10
 python-dotenv==1.0.1
 chembl-webresource-client==0.10.8
