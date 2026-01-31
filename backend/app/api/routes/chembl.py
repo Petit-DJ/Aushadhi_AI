@@ -1,11 +1,9 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
+from app.services.chembl_service import chembl_service
 
 router = APIRouter()
-
-# Simple placeholder image (1x1 white pixel PNG in base64)
-PLACEHOLDER_IMAGE = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
 
 class ChEMBLRequest(BaseModel):
     pdb_id_input: str
@@ -22,37 +20,35 @@ class ChEMBLResponse(BaseModel):
 @router.post("/fetch_chambl_data/", response_model=List[ChEMBLResponse])
 async def fetch_chembl_data(request: ChEMBLRequest):
     """Fetch ChEMBL molecular hits for a given PDB ID"""
+    
+    # ============ DEBUG STEP 1: Endpoint Hit ============
+    print(f"\n{'*'*60}")
+    print(f"[BACKEND ROUTE] /fetch_chambl_data/ ENDPOINT HIT")
+    print(f"[BACKEND ROUTE] Request received: {request.dict()}")
+    print(f"[BACKEND ROUTE] PDB ID: '{request.pdb_id_input}'")
+    print(f"{'*'*60}\n")
+    
     try:
-        # Mock implementation - replace with actual ChEMBL integration
-        mock_results = [
-            {
-                "molecule": "CC(=O)Oc1ccccc1C(=O)O",
-                "canonical_smiles": "CC(=O)Oc1ccccc1C(=O)O",
-                "ic50": 0.32,
-                "disease_name": "Cancer",
-                "disease_pid": request.pdb_id_input,
-                "disease_protien_name": "TP53",
-                "molecule_image": PLACEHOLDER_IMAGE
-            },
-            {
-                "molecule": "CN1C=NC2=C1C(=O)N(C(=O)N2C)C",
-                "canonical_smiles": "CN1C=NC2=C1C(=O)N(C(=O)N2C)C",
-                "ic50": 0.48,
-                "disease_name": "Cancer",
-                "disease_pid": f"{request.pdb_id_input}_2",
-                "disease_protien_name": "TP53",
-                "molecule_image": PLACEHOLDER_IMAGE
-            },
-            {
-                "molecule": "CC(C)Cc1ccc(cc1)C(C)C(=O)O",
-                "canonical_smiles": "CC(C)Cc1ccc(cc1)C(C)C(=O)O",
-                "ic50": 0.65,
-                "disease_name": "Cancer",
-                "disease_pid": f"{request.pdb_id_input}_3",
-                "disease_protien_name": "TP53",
-                "molecule_image": PLACEHOLDER_IMAGE
-            }
-        ]
-        return mock_results
+        # ============ DEBUG STEP 2: Calling Service ============
+        print(f"[BACKEND ROUTE] Calling ChEMBL service...")
+        results = await chembl_service.fetch_bioactivity_data(request.pdb_id_input)
+        
+        # ============ DEBUG STEP 3: Service Response ============
+        print(f"\n{'*'*60}")
+        print(f"[BACKEND ROUTE] Service returned successfully")
+        print(f"[BACKEND ROUTE] Number of molecules: {len(results)}")
+        print(f"[BACKEND ROUTE] Response type: {type(results)}")
+        if results:
+            print(f"[BACKEND ROUTE] First molecule IC50: {results[0].get('ic50')}")
+            has_image = results[0].get('molecule_image') is not None
+            print(f"[BACKEND ROUTE] First molecule has image: {has_image}")
+        print(f"[BACKEND ROUTE] Sending response to client...")
+        print(f"{'*'*60}\n")
+        
+        return results
+        
     except Exception as e:
+        print(f"\n[BACKEND ROUTE] ❌ ERROR: {e}")
+        print(f"[BACKEND ROUTE] Error type: {type(e).__name__}")
         raise HTTPException(status_code=500, detail=str(e))
+
